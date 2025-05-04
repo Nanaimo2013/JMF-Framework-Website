@@ -1,0 +1,64 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2023-08-01T00:00:00+00:00",
+    "name": "JMF Framework Website",
+    "author": "nanaimo2013",
+    "description": "Official JMF Framework Website running in a Docker container.",
+    "features": [
+        "docker"
+    ],
+    "docker_images": {
+        "ghcr.io/nanaimo2013/jmf-framework-website:latest": "ghcr.io/nanaimo2013/jmf-framework-website:latest"
+    },
+    "file_denylist": [],
+    "startup": "/entrypoint.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Starting nginx on port\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# JMF Framework Website Installation Script\n\ncd /mnt/server\n\n# Create entrypoint.sh if it doesn't exist\nif [ ! -f entrypoint.sh ]; then\n    curl -sSL https://raw.githubusercontent.com/nanaimo2013/jmf-framework-website/main/entrypoint.sh -o entrypoint.sh\n    chmod +x entrypoint.sh\nfi\n\necho \"Installation completed successfully!\"",
+            "container": "alpine:latest",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Port",
+            "description": "The port that the website will be accessible on.",
+            "env_variable": "SERVER_PORT",
+            "default_value": "80",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|between:1,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Pterodactyl Mode",
+            "description": "Enable Pterodactyl-specific optimizations.",
+            "env_variable": "PTERODACTYL",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|string|in:true",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Repository",
+            "description": "Optional Git repository URL for auto-updates. Leave empty to disable.",
+            "env_variable": "GIT_REPO",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        }
+    ]
+} 
