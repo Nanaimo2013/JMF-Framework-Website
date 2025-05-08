@@ -44,9 +44,10 @@ if [ -n "$PTERODACTYL" ]; then
     # Create custom nginx config with dynamic port if needed
     if [ "$SERVER_PORT" != "80" ]; then
         log "Configuring nginx to listen on port $SERVER_PORT"
-        cat > /etc/nginx/conf.d/default.conf << EOF
+        mkdir -p /mnt/server/nginx
+        cat > /mnt/server/nginx/default.conf << EOF
 server {
-    listen $SERVER_PORT;
+    listen ${SERVER_PORT};
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
@@ -54,11 +55,16 @@ server {
     location / {
         try_files \$uri \$uri/ /index.html;
     }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
 }
 EOF
     fi
 fi
 
-# Start nginx
+# Start nginx with the custom config
 log "Starting nginx on port $SERVER_PORT..."
-nginx -g "daemon off;" 
+nginx -c /etc/nginx/nginx.conf -g 'daemon off;' 

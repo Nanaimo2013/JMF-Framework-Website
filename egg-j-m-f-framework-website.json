@@ -4,10 +4,10 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2023-08-01T00:00:00+00:00",
+    "exported_at": "2025-05-08T13:51:02-07:00",
     "name": "JMF Framework Website",
-    "author": "nanaimo2013",
-    "description": "Official JMF Framework Website running in a Docker container.",
+    "author": "jmfcorp@jmfhosting.com",
+    "description": "The official JMF Framework Website is running in a Docker container.",
     "features": [
         "docker"
     ],
@@ -18,13 +18,13 @@
     "startup": "/entrypoint.sh",
     "config": {
         "files": "{}",
-        "startup": "{\r\n    \"done\": \"Starting nginx on port\"\r\n}",
+        "startup": "{\"done\": \"Starting nginx on port\"}",
         "logs": "{}",
         "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/bash\n# JMF Framework Website Installation Script\n\ncd /mnt/server\n\n# Create entrypoint.sh if it doesn't exist\nif [ ! -f entrypoint.sh ]; then\n    curl -sSL https://raw.githubusercontent.com/nanaimo2013/jmf-framework-website/main/entrypoint.sh -o entrypoint.sh\n    chmod +x entrypoint.sh\nfi\n\necho \"Installation completed successfully!\"",
+            "script": "#!/bin/bash\ncd /mnt/server\necho \"Installation completed successfully!\"",
             "container": "alpine:latest",
             "entrypoint": "bash"
         }
@@ -32,7 +32,7 @@
     "variables": [
         {
             "name": "Server Port",
-            "description": "The port that the website will be accessible on.",
+            "description": "The port on which the website will be accessible.",
             "env_variable": "SERVER_PORT",
             "default_value": "80",
             "user_viewable": true,
@@ -53,7 +53,7 @@
         {
             "name": "Git Repository",
             "description": "Optional Git repository URL for auto-updates. Leave empty to disable.",
-            "env_variable": "GIT_REPO",
+            "env_variable": "GITREPO",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
@@ -61,4 +61,4 @@
             "field_type": "text"
         }
     ]
-} 
+}

@@ -1,3 +1,4 @@
+# Build stage
 FROM node:18-alpine as build
 
 WORKDIR /app
@@ -8,6 +9,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Production stage
 FROM nginx:alpine
 
 # Install git for auto-updates
@@ -34,7 +36,10 @@ RUN chmod +x /entrypoint.sh
 # Set environment variables
 ENV SERVER_PORT=80
 ENV NODE_ENV=production
-ENV PTERODACTYL=false
+ENV PTERODACTYL=true
+
+# Create necessary directories
+RUN mkdir -p /mnt/server/nginx
 
 EXPOSE 80
 

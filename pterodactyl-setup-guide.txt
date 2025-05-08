@@ -1,0 +1,156 @@
+JMF Framework Website - Pterodactyl Setup Guide
+============================================
+
+1. EGG CONFIGURATION (egg-j-m-f-framework-website.json)
+----------------------------------------------------
+{
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "name": "JMF Framework Website",
+    "author": "jmfcorp@jmfhosting.com",
+    "description": "The official JMF Framework Website is running in a Docker container.",
+    "features": ["docker"],
+    "docker_images": {
+        "ghcr.io/nanaimo2013/jmf-framework-website:latest": "ghcr.io/nanaimo2013/jmf-framework-website:latest"
+    },
+    "startup": "/entrypoint.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"Starting nginx on port\"}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\ncd /mnt/server\necho \"Installation completed successfully!\"",
+            "container": "alpine:latest",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Port",
+            "description": "The port on which the website will be accessible.",
+            "env_variable": "SERVER_PORT",
+            "default_value": "80",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|between:1,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Pterodactyl Mode",
+            "description": "Enable Pterodactyl-specific optimizations.",
+            "env_variable": "PTERODACTYL",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|string|in:true",
+            "field_type": "text"
+        }
+    ]
+}
+
+2. DOCKERFILE
+------------
+# Build stage
+FROM node:18-alpine as build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+RUN apk add --no-cache git
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+ENV SERVER_PORT=80
+ENV NODE_ENV=production
+ENV PTERODACTYL=true
+RUN mkdir -p /mnt/server/nginx
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]
+
+3. ENTRYPOINT SCRIPT (entrypoint.sh)
+----------------------------------
+#!/bin/sh
+
+# Set environment variables if not already set
+: ${SERVER_PORT:=80}
+: ${NODE_ENV:=production}
+
+# Function to log with timestamp
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Handle Pterodactyl specific environment
+if [ -n "$PTERODACTYL" ]; then
+    log "Running in Pterodactyl environment"
+    
+    # Create custom nginx config with dynamic port if needed
+    if [ "$SERVER_PORT" != "80" ]; then
+        log "Configuring nginx to listen on port $SERVER_PORT"
+        mkdir -p /mnt/server/nginx
+        cat > /mnt/server/nginx/default.conf << EOF
+server {
+    listen ${SERVER_PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+}
+EOF
+    fi
+fi
+
+# Start nginx with the custom config
+log "Starting nginx on port $SERVER_PORT..."
+nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+
+4. SETUP STEPS
+-------------
+1. In Pterodactyl Panel:
+   - Go to Nests → Select your nest → Import Egg
+   - Upload the egg-j-m-framework-website.json file
+
+2. Create New Server:
+   - Click "Create New Server"
+   - Select the JMF Framework Website egg
+   - Set your desired port (default: 80)
+   - Allocate resources as needed
+   - Create server
+
+3. Start the Server:
+   - The server will automatically:
+     - Pull the Docker image
+     - Run the installation script
+     - Start nginx with your configuration
+
+5. TROUBLESHOOTING
+----------------
+If you see errors:
+1. Check server logs in Pterodactyl
+2. Verify port is not in use
+3. Make sure Docker image exists at ghcr.io/nanaimo2013/jmf-framework-website:latest
+4. Check if nginx can write to /mnt/server/nginx
+
+6. UPDATING THE WEBSITE
+----------------------
+To update the website:
+1. Push changes to your GitHub repository
+2. GitHub Actions will build and push new Docker image
+3. Restart the server in Pterodactyl to get the new version 
