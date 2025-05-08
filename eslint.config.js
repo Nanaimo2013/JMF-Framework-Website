@@ -9,6 +9,7 @@ import reactPlugin from 'eslint-plugin-react'
 export default [
   js.configs.recommended,
   {
+    ignores: ['dist/**', 'build/**', 'node_modules/**'],
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: typescriptParser,
@@ -44,9 +45,17 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { 
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_'
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true
       }],
-      'no-undef': 'off' // TypeScript handles this
+      'no-undef': 'off', // TypeScript handles this
+      'no-empty': ['error', { 'allowEmptyCatch': true }],
+      'no-useless-escape': 'warn',
+      'no-prototype-builtins': 'warn',
+      'no-cond-assign': ['error', 'except-parens'],
+      'no-func-assign': 'warn',
+      'no-fallthrough': 'warn',
+      'no-sparse-arrays': 'warn'
     },
     settings: {
       react: {
