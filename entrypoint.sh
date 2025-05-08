@@ -41,30 +41,13 @@ fi
 if [ -n "$PTERODACTYL" ]; then
     log "Running in Pterodactyl environment"
     
-    # Create custom nginx config with dynamic port if needed
+    # Update port in nginx config if needed
     if [ "$SERVER_PORT" != "80" ]; then
         log "Configuring nginx to listen on port $SERVER_PORT"
-        mkdir -p /mnt/server/nginx
-        cat > /mnt/server/nginx/default.conf << EOF
-server {
-    listen ${SERVER_PORT};
-    server_name _;
-    root /usr/share/nginx/html;
-    index index.html;
-    
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-XSS-Protection "1; mode=block";
-    add_header X-Content-Type-Options "nosniff";
-}
-EOF
+        sed -i "s/listen 80/listen $SERVER_PORT/" /etc/nginx/conf.d/default.conf
     fi
 fi
 
-# Start nginx with the custom config
+# Start nginx
 log "Starting nginx on port $SERVER_PORT..."
-nginx -c /etc/nginx/nginx.conf -g 'daemon off;' 
+nginx -g 'daemon off;' 

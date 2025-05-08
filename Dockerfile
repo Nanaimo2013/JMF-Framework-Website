@@ -18,16 +18,13 @@ RUN apk add --no-cache git
 # Copy the built app to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Set up default nginx config for SPA
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Create necessary directories and set permissions
+RUN mkdir -p /var/cache/nginx /var/run \
+    && chown -R nginx:nginx /var/cache/nginx /var/run \
+    && chmod -R 755 /var/cache/nginx /var/run
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy entrypoint script
 COPY entrypoint.sh /
@@ -37,9 +34,6 @@ RUN chmod +x /entrypoint.sh
 ENV SERVER_PORT=80
 ENV NODE_ENV=production
 ENV PTERODACTYL=true
-
-# Create necessary directories
-RUN mkdir -p /mnt/server/nginx
 
 EXPOSE 80
 
