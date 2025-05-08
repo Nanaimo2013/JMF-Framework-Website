@@ -1,0 +1,42 @@
+# <type>: <subject>
+# |<----  Using up to 50 characters  ---->|
+
+# Explain why this change is being made
+# |<----   Try To Limit Each Line to a Maximum Of 72 Characters   ---->|
+
+# --- COMMIT END ---
+# Types can be
+#   feat     (new feature)
+#   fix      (bug fix)
+#   docs     (changes to documentation)
+#   style    (formatting, missing semi colons, etc; no code change)
+#   refactor (refactoring production code)
+#   test     (adding missing tests, refactoring tests; no production code change)
+#   chore    (updating grunt tasks etc; no production code change)
+# --------------------
+# Remember to
+#   * Capitalize the subject line
+#   * Use the imperative mood in the subject line
+#   * Do not end the subject line with a period
+#   * Separate subject from body with a blank line
+#   * Use the body to explain what and why vs. how
+#   * Can use multiple lines with "-" for bullet points in body
+# --------------------
+
+# Example commit messages for this project:
+# feat: Add Download page with API integration
+# - Implemented real-time API data fetching
+# - Added notification system for user feedback
+# - Created structured API service architecture
+#
+# fix: Resolve download button responsiveness
+# - Fixed button state management
+# - Improved error handling
+#
+# docs: Update installation guide
+# - Added Docker setup instructions
+# - Included Pterodactyl configuration
+#
+# chore: Update dependencies
+# - Updated React to latest version
+# - Fixed security vulnerabilities 
