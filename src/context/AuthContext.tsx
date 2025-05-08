@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   // Regular user login (API-based)
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (_username: string, _password: string): Promise<boolean> => {
     try {
       // In a real app, you would call an API here
       // For demo, just simulate successful login
@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 };
 
 // Higher-order component for protecting admin routes
-export const withAdmin = (Component: React.ComponentType<any>) => {
-  return (props: any) => {
+export const withAdmin = (Component: React.ComponentType) => {
+  return (props: Record<string, unknown>) => {
     const { isAdmin, isLoading } = useAuth();
     const location = useLocation();
     
