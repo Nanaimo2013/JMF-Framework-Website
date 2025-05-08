@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../components/NotificationManager';
 import './ContactPage.css';
 import GetInTouch from '../../components/GetInTouch';
+import styled from 'styled-components';
 
 // Adding more icon components
 const UserIcon = () => (
@@ -77,6 +78,26 @@ const WorldIcon = () => (
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
   </svg>
 );
+
+const _TwitterIcon = styled(TwitterIcon)`
+  // Add any additional styles here
+`;
+
+const _CodeIcon = styled(CodeIcon)`
+  // Add any additional styles here
+`;
+
+const _BugIcon = styled(BugIcon)`
+  // Add any additional styles here
+`;
+
+const _StarIcon = styled(StarIcon)`
+  // Add any additional styles here
+`;
+
+const _WorldIcon = styled(WorldIcon)`
+  // Add any additional styles here
+`;
 
 const ContactPage = () => {
   const { addNotification } = useNotification();

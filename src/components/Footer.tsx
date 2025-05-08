@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/Footer.css';
 import { useNotification } from './NotificationManager';
+import styled from 'styled-components';
 
 // Icon components
 const HomeIcon = () => (
@@ -109,6 +110,14 @@ const LegalIcon = () => (
     <path d="M14 14l2-2-2-2"></path>
   </svg>
 );
+
+const _TutorialIcon = styled(TutorialIcon)`
+  // Add any necessary styles here
+`;
+
+const _BookIcon = styled(BookIcon)`
+  // Add any necessary styles here
+`;
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
