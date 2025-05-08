@@ -198,25 +198,73 @@ const DocumentationPage = () => {
   
   // Extract the current section from the URL
   const currentPath = location.pathname.split('/').filter(Boolean);
-  const currentSection = currentPath.length > 1 ? currentPath[1] : 'getting-started';
+  
+  // Improved section detection logic
+  let currentSection = 'getting-started';
+  let currentSubSection = '';
+  
+  if (currentPath.length > 1) {
+    // First, determine if we're using /docs or /documentation pattern
+    const isDocsPattern = currentPath[0] === 'docs';
+    const isDocumentationPattern = currentPath[0] === 'documentation';
+    
+    if (isDocsPattern) {
+      // Handle /docs pattern
+      if (currentPath.length === 2) {
+        // Path format: /docs/section
+        currentSection = currentPath[1];
+      } else if (currentPath.length >= 3) {
+        // Path format: /docs/category/section
+        if (currentPath[1] === 'api') {
+          currentSection = 'api';
+          currentSubSection = currentPath[2];
+        } else if (currentPath[1] === 'cli') {
+          currentSection = 'cli';
+          currentSubSection = currentPath[2];
+        } else {
+          currentSection = currentPath[1];
+        }
+      }
+    } else if (isDocumentationPattern) {
+      // Handle /documentation pattern
+      if (currentPath.length === 2) {
+        // Path format: /documentation/section
+        currentSection = currentPath[1];
+      } else if (currentPath.length >= 3) {
+        // Check if using old pattern with /sections/
+        if (currentPath[1] === 'sections' && currentPath.length >= 4) {
+          // Path format: /documentation/sections/category/section
+          if (currentPath[2] === 'api') {
+            currentSection = 'api';
+            currentSubSection = currentPath[3];
+          } else if (currentPath[2] === 'cli') {
+            currentSection = 'cli';
+            currentSubSection = currentPath[3];
+          }
+        } else {
+          currentSection = currentPath[1];
+        }
+      }
+    }
+  }
   
   // Mock search data (in a real app, this would come from a search index)
   const searchData = [
-    { title: 'Installation', path: '/documentation/getting-started', category: 'Getting Started' },
-    { title: 'Quick Start', path: '/documentation/quick-start', category: 'Getting Started' },
-    { title: 'Project Structure', path: '/documentation/project-structure', category: 'Getting Started' },
-    { title: 'API Overview', path: '/documentation/api', category: 'API Reference' },
-    { title: 'Core API', path: '/documentation/sections/api/api-core', category: 'API Reference' },
-    { title: 'Router API', path: '/documentation/sections/api/api-router', category: 'API Reference' },
-    { title: 'State Management API', path: '/documentation/sections/api/api-state', category: 'API Reference' },
-    { title: 'UI Components API', path: '/documentation/sections/api/api-ui', category: 'API Reference' },
-    { title: 'Data Handling API', path: '/documentation/sections/api/api-data', category: 'API Reference' },
-    { title: 'CLI Commands Overview', path: '/documentation/cli', category: 'CLI Commands' },
-    { title: 'Creating Projects', path: '/documentation/cli-create', category: 'CLI Commands' },
-    { title: 'Development Server', path: '/documentation/cli-serve', category: 'CLI Commands' },
-    { title: 'CLI Configuration', path: '/documentation/sections/cli/cli-config', category: 'CLI Commands' },
-    { title: 'Basic Examples', path: '/documentation/examples', category: 'Examples' },
-    { title: 'Advanced Examples', path: '/documentation/examples-advanced', category: 'Examples' },
+    { title: 'Installation', path: '/docs/getting-started', category: 'Getting Started' },
+    { title: 'Quick Start', path: '/docs/quick-start', category: 'Getting Started' },
+    { title: 'Project Structure', path: '/docs/project-structure', category: 'Getting Started' },
+    { title: 'API Overview', path: '/docs/api', category: 'API Reference' },
+    { title: 'Core API', path: '/docs/api/api-core', category: 'API Reference' },
+    { title: 'Router API', path: '/docs/api/api-router', category: 'API Reference' },
+    { title: 'State Management API', path: '/docs/api/api-state', category: 'API Reference' },
+    { title: 'UI Components API', path: '/docs/api/api-ui', category: 'API Reference' },
+    { title: 'Data Handling API', path: '/docs/api/api-data', category: 'API Reference' },
+    { title: 'CLI Commands Overview', path: '/docs/cli', category: 'CLI Commands' },
+    { title: 'Creating Projects', path: '/docs/cli-create', category: 'CLI Commands' },
+    { title: 'Development Server', path: '/docs/cli-serve', category: 'CLI Commands' },
+    { title: 'CLI Configuration', path: '/docs/cli/cli-config', category: 'CLI Commands' },
+    { title: 'Basic Examples', path: '/docs/examples', category: 'Examples' },
+    { title: 'Advanced Examples', path: '/docs/examples-advanced', category: 'Examples' },
   ];
   
   const handleSearch = (e: React.FormEvent) => {
@@ -326,19 +374,19 @@ const DocumentationPage = () => {
                   </h3>
                   <ul>
                     <li className={currentSection === 'getting-started' ? 'active' : ''}>
-                      <Link to="/documentation/getting-started">
+                      <Link to="/docs/getting-started">
                         <span className="nav-item-icon"><CliCreateIcon /></span>
                         Installation
                       </Link>
                     </li>
                     <li className={currentSection === 'quick-start' ? 'active' : ''}>
-                      <Link to="/documentation/quick-start">
+                      <Link to="/docs/quick-start">
                         <span className="nav-item-icon"><QuickStartIcon /></span>
                         Quick Start
                       </Link>
                     </li>
                     <li className={currentSection === 'project-structure' ? 'active' : ''}>
-                      <Link to="/documentation/project-structure">
+                      <Link to="/docs/project-structure">
                         <span className="nav-item-icon"><ProjectStructureIcon /></span>
                         Project Structure
                       </Link>
@@ -355,37 +403,37 @@ const DocumentationPage = () => {
                   </h3>
                   <ul>
                     <li className={currentSection === 'api' ? 'active' : ''}>
-                      <Link to="/documentation/api">
+                      <Link to="/docs/api">
                         <span className="nav-item-icon"><ApiOverviewIcon /></span>
                         Overview
                       </Link>
                     </li>
                     <li className={currentSection === 'api-core' ? 'active' : ''}>
-                      <Link to="/documentation/sections/api/api-core">
+                      <Link to="/docs/api/api-core">
                         <span className="nav-item-icon"><ApiCoreIcon /></span>
                         Core API
                       </Link>
                     </li>
                     <li className={currentSection === 'api-router' ? 'active' : ''}>
-                      <Link to="/documentation/sections/api/api-router">
+                      <Link to="/docs/api/api-router">
                         <span className="nav-item-icon"><ApiRouterIcon /></span>
                         Router API
                       </Link>
                     </li>
                     <li className={currentSection === 'api-state' ? 'active' : ''}>
-                      <Link to="/documentation/sections/api/api-state">
+                      <Link to="/docs/api/api-state">
                         <span className="nav-item-icon"><ApiStateIcon /></span>
                         State Management API
                       </Link>
                     </li>
                     <li className={currentSection === 'api-ui' ? 'active' : ''}>
-                      <Link to="/documentation/sections/api/api-ui">
+                      <Link to="/docs/api/api-ui">
                         <span className="nav-item-icon"><ApiUIIcon /></span>
                         UI Components API
                       </Link>
                     </li>
                     <li className={currentSection === 'api-data' ? 'active' : ''}>
-                      <Link to="/documentation/sections/api/api-data">
+                      <Link to="/docs/api/api-data">
                         <span className="nav-item-icon"><ApiDataIcon /></span>
                         Data Handling API
                       </Link>
@@ -402,25 +450,25 @@ const DocumentationPage = () => {
                   </h3>
                   <ul>
                     <li className={currentSection === 'cli' ? 'active' : ''}>
-                      <Link to="/documentation/cli">
+                      <Link to="/docs/cli">
                         <span className="nav-item-icon"><CliOverviewIcon /></span>
                         Command Overview
                       </Link>
                     </li>
                     <li className={currentSection === 'cli-create' ? 'active' : ''}>
-                      <Link to="/documentation/cli-create">
+                      <Link to="/docs/cli-create">
                         <span className="nav-item-icon"><CliCreateIcon /></span>
                         Creating Projects
                       </Link>
                     </li>
                     <li className={currentSection === 'cli-serve' ? 'active' : ''}>
-                      <Link to="/documentation/cli-serve">
+                      <Link to="/docs/cli-serve">
                         <span className="nav-item-icon"><CliServeIcon /></span>
                         Development Server
                       </Link>
                     </li>
                     <li className={currentSection === 'cli-config' ? 'active' : ''}>
-                      <Link to="/documentation/sections/cli/cli-config">
+                      <Link to="/docs/cli/cli-config">
                         <span className="nav-item-icon"><CliConfigIcon /></span>
                         Configuration
                       </Link>
@@ -437,13 +485,13 @@ const DocumentationPage = () => {
                   </h3>
                   <ul>
                     <li className={currentSection === 'examples' ? 'active' : ''}>
-                      <Link to="/documentation/examples">
+                      <Link to="/docs/examples">
                         <span className="nav-item-icon"><ExamplesIcon /></span>
                         Basic Examples
                       </Link>
                     </li>
                     <li className={currentSection === 'examples-advanced' ? 'active' : ''}>
-                      <Link to="/documentation/examples-advanced">
+                      <Link to="/docs/examples-advanced">
                         <span className="nav-item-icon"><AdvancedExamplesIcon /></span>
                         Advanced Examples
                       </Link>
@@ -456,20 +504,39 @@ const DocumentationPage = () => {
             {/* Main Content */}
             <main className="documentation-main">
               <Routes>
+                {/* Routes for /docs pattern */}
+                <Route path="/" element={<GettingStarted />} />
                 <Route path="/getting-started" element={<GettingStarted />} />
+                <Route path="/examples" element={<Examples />} />
                 <Route path="/api" element={<ApiReference />} />
                 <Route path="/cli" element={<CliCommands />} />
-                <Route path="/examples" element={<Examples />} />
                 
-                {/* New routes for API documentation */}
-                <Route path="/sections/api/api-core" element={<ApiCore />} />
-                <Route path="/sections/api/api-router" element={<ApiRouter />} />
-                <Route path="/sections/api/api-state" element={<ApiState />} />
-                <Route path="/sections/api/api-ui" element={<ApiUi />} />
-                <Route path="/sections/api/api-data" element={<ApiData />} />
+                {/* API subsections - /docs pattern */}
+                <Route path="/api/api-core" element={<ApiCore />} />
+                <Route path="/api/api-router" element={<ApiRouter />} />
+                <Route path="/api/api-state" element={<ApiState />} />
+                <Route path="/api/api-ui" element={<ApiUi />} />
+                <Route path="/api/api-data" element={<ApiData />} />
                 
-                {/* New routes for CLI documentation */}
-                <Route path="/sections/cli/cli-config" element={<CliConfig />} />
+                {/* CLI subsections - /docs pattern */}
+                <Route path="/cli/cli-config" element={<CliConfig />} />
+                
+                {/* Routes for /documentation pattern */}
+                <Route path="/documentation" element={<GettingStarted />} />
+                <Route path="/documentation/getting-started" element={<GettingStarted />} />
+                <Route path="/documentation/examples" element={<Examples />} />
+                <Route path="/documentation/api" element={<ApiReference />} />
+                <Route path="/documentation/cli" element={<CliCommands />} />
+                
+                {/* API subsections - /documentation pattern with /sections/ */}
+                <Route path="/documentation/sections/api/api-core" element={<ApiCore />} />
+                <Route path="/documentation/sections/api/api-router" element={<ApiRouter />} />
+                <Route path="/documentation/sections/api/api-state" element={<ApiState />} />
+                <Route path="/documentation/sections/api/api-ui" element={<ApiUi />} />
+                <Route path="/documentation/sections/api/api-data" element={<ApiData />} />
+                
+                {/* CLI subsections - /documentation pattern with /sections/ */}
+                <Route path="/documentation/sections/cli/cli-config" element={<CliConfig />} />
                 
                 <Route 
                   path="*" 
@@ -479,7 +546,7 @@ const DocumentationPage = () => {
                       <p>We're working on this section of the documentation. Please check back later!</p>
                       <button 
                         className="btn btn-primary" 
-                        onClick={() => navigate('/documentation/getting-started')}
+                        onClick={() => navigate('/docs/getting-started')}
                       >
                         Go to Getting Started
                       </button>

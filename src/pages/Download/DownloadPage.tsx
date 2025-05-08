@@ -1,160 +1,70 @@
 import { useState, useEffect, useRef } from 'react';
 import '../../styles/DownloadPage.css';
-
-// Type declarations
-type Platform = 'windows' | 'linux' | 'macos';
-type ReleaseType = 'stable' | 'beta' | 'alpha';
-
-// Type for release objects
-interface Release {
-  version: string;
-  type: ReleaseType;
-  date: string;
-  platforms: Platform[];
-  size: string;
-  majorVersion: string;
-  releaseNotes: string;
-  changelog: {
-    type: string;
-    text: string;
-  }[];
-}
-
-// Expanded mock release data with version categories and more details
-const RELEASES: Release[] = [
-  // Version 1.x
-  {
-    version: '1.2.0',
-    type: 'stable',
-    date: '2025-06-15',
-    platforms: ['windows', 'linux', 'macos'],
-    size: '4.2 MB',
-    majorVersion: '1.0',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v1.2.0',
-    changelog: [
-      { type: 'major', text: 'Performance improvements in core rendering engine' },
-      { type: 'feature', text: 'New data visualization components' },
-      { type: 'feature', text: 'Expanded CLI capabilities with custom plugins' },
-      { type: 'fix', text: 'Fixed memory leak in state management system' },
-    ]
-  },
-  {
-    version: '1.1.0',
-    type: 'stable',
-    date: '2025-05-10',
-    platforms: ['windows', 'linux', 'macos'],
-    size: '4.0 MB',
-    majorVersion: '1.0',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v1.1.0',
-    changelog: [
-      { type: 'feature', text: 'Added internationalization support' },
-      { type: 'feature', text: 'New theme system with dark mode' },
-      { type: 'fix', text: 'Fixed routing issues with nested routes' },
-    ]
-  },
-  {
-    version: '1.0.0',
-    type: 'stable',
-    date: '2025-04-02',
-    platforms: ['windows', 'linux', 'macos'],
-    size: '3.8 MB',
-    majorVersion: '1.0',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v1.0.0',
-    changelog: [
-      { type: 'major', text: 'Initial stable release' },
-      { type: 'feature', text: 'Core libraries with full TypeScript support' },
-      { type: 'feature', text: 'Command line interface with project scaffolding' },
-      { type: 'feature', text: 'Documentation and API reference' },
-    ]
-  },
-  
-  // Version 0.9.x
-  {
-    version: '0.9.5',
-    type: 'beta',
-    date: '2025-03-20',
-    platforms: ['windows', 'linux', 'macos'],
-    size: '3.6 MB',
-    majorVersion: '0.9',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v0.9.5',
-    changelog: [
-      { type: 'feature', text: 'Final beta release before stable' },
-      { type: 'feature', text: 'Complete documentation' },
-      { type: 'fix', text: 'Last minute bug fixes and optimizations' },
-    ]
-  },
-  {
-    version: '0.9.0',
-    type: 'beta',
-    date: '2025-03-15',
-    platforms: ['windows', 'linux'],
-    size: '3.5 MB',
-    majorVersion: '0.9',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v0.9.0',
-    changelog: [
-      { type: 'feature', text: 'Pre-release version with core functionality' },
-      { type: 'feature', text: 'Basic CLI commands implemented' },
-      { type: 'fix', text: 'Fixed performance issues in development mode' }
-    ]
-  },
-  
-  // Version 0.8.x
-  {
-    version: '0.8.5',
-    type: 'beta',
-    date: '2025-03-01',
-    platforms: ['windows'],
-    size: '3.2 MB',
-    majorVersion: '0.8',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v0.8.5',
-    changelog: [
-      { type: 'feature', text: 'Initial beta release' },
-      { type: 'fix', text: 'Multiple bug fixes and performance improvements' }
-    ]
-  },
-  {
-    version: '0.8.0',
-    type: 'alpha',
-    date: '2025-02-20',
-    platforms: ['windows'],
-    size: '3.0 MB',
-    majorVersion: '0.8',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v0.8.0',
-    changelog: [
-      { type: 'feature', text: 'Major architecture redesign' },
-      { type: 'feature', text: 'Preparing for beta release' },
-    ]
-  },
-  
-  // Version 0.7.x
-  {
-    version: '0.7.0',
-    type: 'alpha',
-    date: '2025-02-15',
-    platforms: ['windows'],
-    size: '2.8 MB',
-    majorVersion: '0.7',
-    releaseNotes: 'https://github.com/jmf-framework/release-notes/v0.7.0',
-    changelog: [
-      { type: 'feature', text: 'Alpha preview for early testing' }
-    ]
-  }
-];
+import downloadsApi, { Release, Platform, ReleaseType } from '../../services/api/downloadsApi';
+import { useNotification } from '../../components/NotificationManager';
 
 const DownloadPage = () => {
+  const [releases, setReleases] = useState<Release[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ReleaseType | 'all'>('all');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeTab, setActiveTab] = useState('latest');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [latestRelease, setLatestRelease] = useState<Release | null>(null);
+  const [downloadStats, setDownloadStats] = useState<{
+    totalDownloads: number;
+    downloadsByPlatform: Record<Platform, number>;
+  } | null>(null);
+  
+  const { addNotification } = useNotification();
   const filterContainerRef = useRef<HTMLDivElement>(null);
   
+  // Fetch releases on component mount
+  useEffect(() => {
+    const fetchReleases = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch all releases
+        const data = await downloadsApi.getAllReleases();
+        setReleases(data);
+        
+        // Fetch latest stable release
+        const latest = await downloadsApi.getLatestRelease();
+        setLatestRelease(latest);
+        
+        // Fetch download statistics
+        try {
+          const stats = await downloadsApi.getDownloadStats();
+          setDownloadStats({
+            totalDownloads: stats.totalDownloads,
+            downloadsByPlatform: stats.downloadsByPlatform
+          });
+        } catch (statsError) {
+          console.error('Failed to load download statistics', statsError);
+          // Non-critical error, don't show to user
+        }
+      } catch (err) {
+        console.error('Failed to load releases', err);
+        setError('Failed to load releases. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchReleases();
+  }, []);
+  
   // Get unique major versions for categorization
-  const majorVersions = Array.from(new Set(RELEASES.map(release => release.majorVersion)))
-    .sort((a, b) => parseFloat(b) - parseFloat(a)); // Sort in descending order
+  const majorVersions = Array.from(
+    new Set(releases.map(release => release.majorVersion))
+  ).sort((a, b) => parseFloat(b) - parseFloat(a)); // Sort in descending order
   
   // Apply filters
-  const filteredReleases = RELEASES.filter(release => 
+  const filteredReleases = releases.filter(release => 
     (filterType === 'all' || release.type === filterType)
   );
   
@@ -165,9 +75,6 @@ const DownloadPage = () => {
     );
     return acc;
   }, {} as Record<string, Release[]>);
-  
-  // Get latest stable release
-  const latestStableRelease = RELEASES.find(release => release.type === 'stable');
   
   const handleFilterChange = (type: ReleaseType | 'all') => {
     if (type !== filterType) {
@@ -199,10 +106,35 @@ const DownloadPage = () => {
     }
   };
   
-  const handleDownload = (version: string, platform: Platform) => {
-    // In a real app, this would trigger the download
-    console.log(`Downloading ${version} for ${platform}`);
-    alert(`Starting download for JMF Framework ${version} (${platform})`);
+  const handleDownload = async (version: string, platform: Platform) => {
+    try {
+      addNotification(`Starting download for JMF Framework ${version} (${platform})`, 'info', 3000);
+      
+      // Get the release data
+      const release = releases.find(r => r.version === version);
+      if (!release) {
+        throw new Error(`Release ${version} not found`);
+      }
+      
+      // Track download analytics
+      await downloadsApi.trackDownload(version, platform);
+      
+      // Trigger the download
+      const downloadUrl = release.downloadUrl[platform];
+      
+      // Create a link element and click it to start the download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', `jmf-framework-${version}-${platform}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      addNotification(`Download started for JMF Framework ${version}`, 'success', 3000);
+    } catch (err) {
+      console.error('Download failed', err);
+      addNotification('Download failed. Please try again later.', 'error', 5000);
+    }
   };
   
   const formatDate = (dateString: string) => {
@@ -214,12 +146,55 @@ const DownloadPage = () => {
     });
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="download-page">
+        <section className="download-hero">
+          <div className="container">
+            <h1>Download JMF Framework</h1>
+            <p className="download-subtitle">Loading releases...</p>
+            <div className="loading-spinner"></div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="download-page">
+        <section className="download-hero">
+          <div className="container">
+            <h1>Download JMF Framework</h1>
+            <p className="download-subtitle">Error loading releases</p>
+            <div className="error-message">
+              <p>{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="retry-button"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="download-page">
       <section className="download-hero">
         <div className="container">
           <h1>Download JMF Framework</h1>
           <p className="download-subtitle">Get the latest version for your platform</p>
+          {downloadStats && (
+            <div className="download-stats">
+              <span>{downloadStats.totalDownloads.toLocaleString()} total downloads</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -246,62 +221,72 @@ const DownloadPage = () => {
       </div>
 
       {/* Latest Version Download Section */}
-      {activeTab === 'latest' && latestStableRelease && (
+      {activeTab === 'latest' && latestRelease && (
         <section className="section latest-version-section">
           <div className="container">
             <div className="latest-version-card">
-              <div className="version-info">
-                <div className="version-header">
-                  <h3>JMF Framework {latestStableRelease.version}</h3>
-                  <span className={`release-tag ${latestStableRelease.type}`}>{latestStableRelease.type}</span>
+              <div className="latest-version-header">
+                <h2>JMF Framework {latestRelease.version}</h2>
+                <span className={`version-tag ${latestRelease.type}`}>
+                  {latestRelease.type.toUpperCase()}
+                </span>
+              </div>
+              
+              <div className="latest-version-info">
+                <div className="version-metadata">
+                  <span>Released: {formatDate(latestRelease.date)}</span>
+                  <span>Size: {latestRelease.size}</span>
                 </div>
-                <p className="release-date">Released on {formatDate(latestStableRelease.date)}</p>
-                <p className="release-size">Size: {latestStableRelease.size}</p>
-                <div className="version-platforms">
-                  {['windows', 'linux', 'macos'].map((platform) => (
+
+                <div className="platform-downloads">
+                  {latestRelease.platforms.map(platform => (
                     <button
                       key={platform}
-                      className={`platform-button ${latestStableRelease.platforms.includes(platform as Platform) ? 'available' : 'unavailable'}`}
-                      disabled={!latestStableRelease.platforms.includes(platform as Platform)}
-                      onClick={() => latestStableRelease.platforms.includes(platform as Platform) && 
-                        handleDownload(latestStableRelease.version, platform as Platform)}
+                      className="download-button"
+                      onClick={() => handleDownload(latestRelease.version, platform)}
                     >
-                      <span className={`platform-icon ${platform}`}></span>
-                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      <span className="platform-icon">
+                        {platform === 'windows' ? 
+                          <i className="fa-brands fa-windows"></i> : 
+                          platform === 'linux' ? 
+                            <i className="fa-brands fa-linux"></i> : 
+                            <i className="fa-brands fa-apple"></i>}
+                      </span>
+                      <span className="platform-name">
+                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      </span>
                     </button>
                   ))}
                 </div>
-                <a 
-                  href={latestStableRelease.releaseNotes} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="release-notes-link"
-                >
-                  Release Notes
-                </a>
               </div>
-              <div className="version-changelog">
-                <h4>What's New</h4>
-                <ul className="changelog-list">
-                  {latestStableRelease.changelog.map((item, index) => (
-                    <li key={index} className={`changelog-item ${item.type}`}>
-                      {item.text}
-                    </li>
+
+              <div className="release-notes">
+                <h3>Release Notes</h3>
+                <div className="changelog">
+                  {latestRelease.changelog.map((item, index) => (
+                    <div key={index} className={`changelog-item ${item.type}`}>
+                      <span className="changelog-type">{item.type}:</span>
+                      <span className="changelog-text">{item.text}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
+                <a href={latestRelease.releaseNotes} target="_blank" rel="noopener noreferrer" className="view-full-notes">
+                  View Full Release Notes
+                </a>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* All Releases Section */}
+      {/* All Versions Section */}
       {activeTab === 'all' && (
-        <section className="section all-releases-section">
+        <section className="section all-versions-section">
           <div className="container">
-            <div className="section-header">
-              <h2>All Releases</h2>
-              <div className="release-filters" ref={filterContainerRef}>
+            <div className="filter-container" ref={filterContainerRef}>
+              <h2>All Versions</h2>
+              
+              <div className="release-filters">
                 <button 
                   className={`filter-button ${filterType === 'all' ? 'active' : ''}`}
                   onClick={() => handleFilterChange('all')}
@@ -329,130 +314,170 @@ const DownloadPage = () => {
               </div>
             </div>
 
-            <div className={`releases-container ${isAnimating ? 'fade-out' : 'fade-in'}`}>
-              {majorVersions.map(majorVersion => (
-                releasesByMajorVersion[majorVersion]?.length > 0 && (
-                  <div key={majorVersion} className="release-category">
-                    <div 
-                      className="category-header" 
-                      onClick={() => toggleCategory(majorVersion)}
-                    >
-                      <h3>Version {majorVersion}.x</h3>
-                      <span className={`category-toggle ${expandedCategory === majorVersion ? 'open' : ''}`}></span>
-                    </div>
-                    
-                    <div className={`category-releases ${expandedCategory === majorVersion ? 'expanded' : ''}`}>
-                      {releasesByMajorVersion[majorVersion]?.map((release) => (
-                        <div key={release.version} className={`release-card ${selectedVersion === release.version ? 'expanded' : ''}`}>
-                          <div 
-                            className="release-header"
-                            onClick={() => setSelectedVersion(
-                              selectedVersion === release.version ? null : release.version
-                            )}
-                          >
-                            <div className="release-title">
-                              <h4>Version {release.version}</h4>
-                              <span className={`release-type ${release.type}`}>{release.type}</span>
-                            </div>
-                            <div className="release-meta">
-                              <span className="release-date">{formatDate(release.date)}</span>
-                              <span className="release-size">{release.size}</span>
-                              <div className="platform-indicators">
-                                {['windows', 'linux', 'macos'].map(platform => (
-                                  <span 
+            {majorVersions.length === 0 ? (
+              <div className="no-releases">
+                <p>No releases match the selected filter.</p>
+              </div>
+            ) : (
+              <div className="versions-list">
+                {majorVersions.map(majorVersion => {
+                  const versionsInCategory = releasesByMajorVersion[majorVersion] || [];
+                  const isExpanded = expandedCategory === majorVersion;
+                  
+                  return (
+                    <div key={majorVersion} className="version-category">
+                      <div 
+                        className="category-header"
+                        onClick={() => toggleCategory(majorVersion)}
+                      >
+                        <h3>Version {majorVersion}</h3>
+                        <span className="toggle-icon">
+                          {isExpanded ? '−' : '+'}
+                        </span>
+                      </div>
+                      
+                      {isExpanded && (
+                        <div className="category-releases">
+                          {versionsInCategory.map(release => (
+                            <div key={release.version} className="release-item">
+                              <div className="release-header">
+                                <div className="release-title">
+                                  <h4>v{release.version}</h4>
+                                  <span className={`version-tag ${release.type}`}>
+                                    {release.type.toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="release-meta">
+                                  <span>{formatDate(release.date)}</span>
+                                  <span>{release.size}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="release-platforms">
+                                {release.platforms.map(platform => (
+                                  <button
                                     key={platform}
-                                    className={`platform-dot ${release.platforms.includes(platform as Platform) ? 'available' : 'unavailable'}`}
-                                    title={`${platform.charAt(0).toUpperCase() + platform.slice(1)} ${release.platforms.includes(platform as Platform) ? 'Available' : 'Unavailable'}`}
-                                  ></span>
+                                    className="download-button small"
+                                    onClick={() => handleDownload(release.version, platform)}
+                                  >
+                                    <span className="platform-icon">
+                                      {platform === 'windows' ? 
+                                        <i className="fa-brands fa-windows"></i> : 
+                                        platform === 'linux' ? 
+                                          <i className="fa-brands fa-linux"></i> : 
+                                          <i className="fa-brands fa-apple"></i>}
+                                    </span>
+                                    <span className="platform-name">
+                                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                    </span>
+                                  </button>
                                 ))}
                               </div>
-                              <span className={`expand-icon ${selectedVersion === release.version ? 'open' : ''}`}></span>
-                            </div>
-                          </div>
-                          
-                          {selectedVersion === release.version && (
-                            <div className="release-details">
-                              <div className="release-changelog">
-                                <h4>Changelog</h4>
-                                <ul className="changelog-list">
-                                  {release.changelog.map((item, index) => (
-                                    <li key={index} className={`changelog-item ${item.type}`}>
-                                      {item.text}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div className="release-actions">
-                                <div className="release-downloads">
-                                  <h4>Download</h4>
-                                  <div className="download-buttons">
-                                    {['windows', 'linux', 'macos'].map(platform => (
-                                      <button
-                                        key={platform}
-                                        className={`download-button ${release.platforms.includes(platform as Platform) ? 'available' : 'unavailable'}`}
-                                        disabled={!release.platforms.includes(platform as Platform)}
-                                        onClick={() => release.platforms.includes(platform as Platform) && 
-                                          handleDownload(release.version, platform as Platform)}
-                                      >
-                                        <span className={`platform-icon ${platform}`}></span>
-                                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                                      </button>
-                                    ))}
+                              
+                              <div className="release-changes">
+                                {release.changelog.slice(0, 2).map((item, index) => (
+                                  <div key={index} className={`changelog-item ${item.type}`}>
+                                    <span className="changelog-type">{item.type}:</span>
+                                    <span className="changelog-text">{item.text}</span>
                                   </div>
-                                </div>
-                                <a 
-                                  href={release.releaseNotes} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="release-notes-link"
-                                >
-                                  Release Notes
-                                </a>
+                                ))}
+                                {release.changelog.length > 2 && (
+                                  <a href={release.releaseNotes} target="_blank" rel="noopener noreferrer" className="more-changes">
+                                    + {release.changelog.length - 2} more changes
+                                  </a>
+                                )}
                               </div>
                             </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       )}
-
+      
       {/* Custom Installer Section */}
       {activeTab === 'custom' && (
         <section className="section custom-installer-section">
           <div className="container">
-            <div className="installer-content">
-              <div className="installer-text">
-                <h2>Custom Installer</h2>
-                <p>Our modern UI installer allows you to customize your installation with the components you need.</p>
-                <ul className="installer-features">
-                  <li>Select specific components to install</li>
-                  <li>Automatic PATH integration</li>
-                  <li>Development environment setup</li>
-                  <li>Project templates</li>
-                </ul>
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => handleDownload(latestStableRelease?.version || '1.0.0', 'windows')}
-                >
-                  Download Installer
-                </button>
-              </div>
-              <div className="installer-image">
-                {/* Placeholder for installer screenshot */}
-                <div className="installer-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  <p>Installer Preview</p>
+            <div className="custom-installer-content">
+              <h2>Custom Installer</h2>
+              <p>Build a custom JMF Framework installer tailored to your specific needs:</p>
+              
+              <div className="custom-installer-form">
+                <div className="form-section">
+                  <h3>Core Components</h3>
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input type="checkbox" checked={true} readOnly />
+                      <span>Core Framework</span>
+                      <small>(Required)</small>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" defaultChecked />
+                      <span>CLI Tools</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" defaultChecked />
+                      <span>Development Toolkit</span>
+                    </label>
+                  </div>
                 </div>
+                
+                <div className="form-section">
+                  <h3>Optional Modules</h3>
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input type="checkbox" defaultChecked />
+                      <span>UI Components</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" defaultChecked />
+                      <span>Data Management</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" />
+                      <span>Server Extensions</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" />
+                      <span>Analytics Tools</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" />
+                      <span>Testing Framework</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-section">
+                  <h3>Target Platform</h3>
+                  <div className="radio-group">
+                    <label className="radio-label">
+                      <input type="radio" name="platform" value="windows" defaultChecked />
+                      <span>Windows</span>
+                    </label>
+                    <label className="radio-label">
+                      <input type="radio" name="platform" value="linux" />
+                      <span>Linux</span>
+                    </label>
+                    <label className="radio-label">
+                      <input type="radio" name="platform" value="macos" />
+                      <span>macOS</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <button 
+                  className="build-button"
+                  onClick={() => addNotification('Custom installer feature coming soon!', 'info', 3000)}
+                >
+                  Build Custom Installer
+                </button>
               </div>
             </div>
           </div>

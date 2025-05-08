@@ -12,29 +12,29 @@ log() {
 # Update application code if a Git repository is configured
 if [ -n "$GIT_REPO" ]; then
     log "Updating from Git repository: $GIT_REPO"
-    
-    if [ -d "/app-repo" ]; then
-        cd /app-repo
+  
+  if [ -d "/app-repo" ]; then
+    cd /app-repo
         log "Pulling latest changes..."
-        git pull
-    else
+    git pull
+  else
         log "Cloning repository..."
-        git clone $GIT_REPO /app-repo
-        cd /app-repo
-    fi
+    git clone $GIT_REPO /app-repo
+    cd /app-repo
+  fi
 
     # Build the application
-    if [ -f "package.json" ]; then
+  if [ -f "package.json" ]; then
         log "Installing dependencies..."
-        npm install
+    npm install
         
         log "Building application..."
-        npm run build
-        
-        # Copy the built app to nginx html directory
+    npm run build
+    
+    # Copy the built app to nginx html directory
         log "Deploying to web server..."
-        cp -r dist/* /usr/share/nginx/html/
-    fi
+    cp -r dist/* /usr/share/nginx/html/
+  fi
 fi
 
 # Handle Pterodactyl specific environment
