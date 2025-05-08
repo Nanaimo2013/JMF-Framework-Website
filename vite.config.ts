@@ -20,11 +20,17 @@ export default defineConfig({
     outDir: 'dist',
     minify: 'terser',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       external: ['react-dropzone'],
       output: {
         globals: {
           'react-dropzone': 'ReactDropzone'
+        },
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui': ['@mui/material', '@mui/icons-material'],
+          'utils': ['axios', 'date-fns']
         }
       }
     }
