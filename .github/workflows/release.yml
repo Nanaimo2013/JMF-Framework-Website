@@ -48,8 +48,8 @@ jobs:
           generate_release_notes: true
           files: |
             dist/**/*
-            CHANGELOG.md
-          body_path: CHANGELOG.md
+          ##    CHANGELOG.md
+          ##    body_path: CHANGELOG.md
 
   docker:
     needs: build
