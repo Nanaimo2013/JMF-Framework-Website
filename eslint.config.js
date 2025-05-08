@@ -9,7 +9,7 @@ import reactPlugin from 'eslint-plugin-react'
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -21,7 +21,9 @@ export default [
       },
       globals: {
         ...globals.browser,
-        ...globals.es2021
+        ...globals.es2021,
+        React: 'readonly',
+        JSX: 'readonly'
       }
     },
     plugins: {
@@ -38,11 +40,28 @@ export default [
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true }
-      ]
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_'
+      }],
+      'no-undef': 'off' // TypeScript handles this
     },
     settings: {
       react: {
         version: 'detect'
+      }
+    }
+  },
+  {
+    files: ['**/*.js', '**/*.jsx'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.es2021,
+        React: 'readonly',
+        JSX: 'readonly'
       }
     }
   }
