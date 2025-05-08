@@ -2,7 +2,6 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import * as tseslint from '@typescript-eslint/eslint-plugin'
 import typescript from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import reactPlugin from 'eslint-plugin-react'
@@ -19,6 +18,10 @@ export default [
         ecmaFeatures: {
           jsx: true
         }
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.es2021
       }
     },
     plugins: {
@@ -28,7 +31,7 @@ export default [
       'react-refresh': reactRefresh
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
+      ...typescript.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
