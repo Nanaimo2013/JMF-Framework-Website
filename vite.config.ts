@@ -27,10 +27,19 @@ export default defineConfig({
         globals: {
           'react-dropzone': 'ReactDropzone'
         },
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui': ['@mui/material', '@mui/icons-material'],
-          'utils': ['axios', 'date-fns']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('@mui')) {
+              return 'ui';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor';
+            }
+            if (id.includes('axios') || id.includes('date-fns')) {
+              return 'utils';
+            }
+            return 'vendor';
+          }
         }
       }
     }
