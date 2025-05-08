@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -12,7 +13,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, './src'),
     }
   },
   build: {
@@ -20,9 +21,10 @@ export default defineConfig({
     minify: 'terser',
     sourcemap: true,
     rollupOptions: {
+      external: ['react-dropzone'],
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'react-dropzone'],
+        globals: {
+          'react-dropzone': 'ReactDropzone'
         }
       }
     }
